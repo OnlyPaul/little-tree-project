@@ -38,7 +38,7 @@ class BpTree : public Container<E> {
 		BpNode* search(const E& e); // search tree for a value, e, return node that 'may' contain the value. normally call from root
 		BpNode* insert(E e);
 		BpNode* split() { return nullptr; }
-		bool hasMember(const E& e);
+		bool member_(const E& e);
 		size_t size_();
 		std::ostream& print(std::ostream& o, int depth) const;
 	};
@@ -56,7 +56,7 @@ public:
 	using Container<E>::remove;
 	virtual void remove(const E[], size_t) override { throw BpTreeNotImplementedException(); }
 
-	virtual bool member(const E& e) const override { return root->hasMember(e); }
+	virtual bool member(const E& e) const override { return root->member_(e); }
 	virtual size_t size() const override { return root->size_(); }
 	virtual bool empty() const override { throw BpTreeNotImplementedException(); }
 
@@ -78,7 +78,7 @@ typename BpTree<E,k>::BpNode* BpTree<E,k>::BpNode::insert(E e) {
 }
 
 template <typename E, size_t k>
-bool BpTree<E,k>::BpNode::hasMember(const E& e) {
+bool BpTree<E,k>::BpNode::member_(const E& e) {
 	if(n_key==0)
 		return false;
 
