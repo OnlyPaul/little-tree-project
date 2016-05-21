@@ -36,8 +36,8 @@ class BpTree : public Container<E> {
 
 		// methods declaration
 		BpNode* search(const E& e); // search tree for a value, e, return node that 'may' contain the value. normally call from root
-		BpNode* insert(E e);
-		BpNode* split() { return nullptr; }
+		BpNode* insert(E e); // more accurately, this is "insert to leaf", which will be manipulated by add()
+		BpNode* split();
 		bool member_(const E& e);
 		size_t size_();
 		std::ostream& print(std::ostream& o, int depth) const;
@@ -70,6 +70,21 @@ public:
 
 // BpNode implementation
 template <typename E, size_t k>
+typename BpTree<E,k>::BpNode* BpTree<E,k>::BpNode::search(const E& e) {
+	if(is_leaf)
+		return this;
+
+	for(size_t i=0; i < n_key; i++) {
+		if(e < key[i])
+			return children[i]->search(e);
+	}
+
+	if(children[n_key+1] != nullptr)
+		return children[n_key+1]->search(e);
+	else return nullptr;
+}
+
+template <typename E, size_t k>
 typename BpTree<E,k>::BpNode* BpTree<E,k>::BpNode::insert(E e) {
 	// find exact position of value
 	size_t i = 0;
@@ -87,6 +102,17 @@ typename BpTree<E,k>::BpNode* BpTree<E,k>::BpNode::insert(E e) {
 	n_key++;
 
 	return this;
+}
+
+template <typename E, size_t k>
+typename BpTree<E,k>::BpNode* BpTree<E,k>::BpNode::split() {
+	BpNode* new_node = new BpNode(parent);
+
+	// move values from'this' to new_node & update new n_key for both nodes
+
+	// re-link all pointers involved
+
+	return nullptr;
 }
 
 template <typename E, size_t k>
@@ -118,21 +144,6 @@ size_t BpTree<E,k>::BpNode::size_() {
 }
 
 template <typename E, size_t k>
-typename BpTree<E,k>::BpNode* BpTree<E,k>::BpNode::search(const E& e) {
-	if(is_leaf)
-		return this;
-
-	for(size_t i=0; i < n_key; i++) {
-		if(e < key[i])
-			return children[i]->search(e);
-	}
-
-	if(children[n_key+1] != nullptr)
-		return children[n_key+1]->search(e);
-	else return nullptr;
-}
-
-template <typename E, size_t k>
 std::ostream& BpTree<E,k>::BpNode::print(std::ostream& o, int depth) const {
 	for (int i = 0; i < depth; i++)
 		o << "  ";
@@ -159,11 +170,16 @@ std::ostream& BpTree<E,k>::BpNode::print(std::ostream& o, int depth) const {
 // BpTree implementation (override: Container)
 template <typename E, size_t k>
 void BpTree<E,k>::add(const E& e) {
+	// leaf insertion&leaf split
 	BpNode* node = root->search(e); // perform search
 	if(node->n_key < node->order) // if node is not full, insert val
 		node->insert(e);
-	else
-		node->split(); // otherwise, split the bucket
+	else {
+		BpNode* right_node = node->split(); // otherwise, split the bucket
+		if()
+	}
+	
+	// split handling
 }
 
 template <typename E, size_t k>
