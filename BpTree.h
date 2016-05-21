@@ -71,9 +71,21 @@ public:
 // BpNode implementation
 template <typename E, size_t k>
 typename BpTree<E,k>::BpNode* BpTree<E,k>::BpNode::insert(E e) {
-	if(n_key < order) {
-		key[n_key++] = e;
-	} else { return nullptr; }
+	// find exact position of value
+	size_t i = 0;
+	for (i=0; i < n_key; i++) {
+		if (e == key[i])
+			return nullptr; // same value insertion is not allowed
+		else if (e < key[i])
+			break;
+	}
+
+	// shift old keys, then insert e ti the position i
+	for(size_t j=n_key; j > i; j--)
+		key[j] = key[j-1];
+	key[i] = e;
+	n_key++;
+
 	return this;
 }
 
@@ -147,7 +159,11 @@ std::ostream& BpTree<E,k>::BpNode::print(std::ostream& o, int depth) const {
 // BpTree implementation (override: Container)
 template <typename E, size_t k>
 void BpTree<E,k>::add(const E& e) {
-	root->insert(e);
+	BpNode* node = root->search(e); // perform search
+	if(node->n_key < node->order) // if node is not full, insert val
+		node->insert(e);
+	else
+		node->split(); // otherwise, split the bucket
 }
 
 template <typename E, size_t k>
