@@ -42,7 +42,7 @@ class BpTree : public Container<E> {
 		BpNode* search(const E& e); // search tree for a value, e, return node that 'may' contain the value. normally call from root
 		BpNode* insert(E e); // more accurately, this is "insert to leaf", which will be manipulated by add()
 		BpNode* split();
-		//BpNode* split(E e);
+		BpNode* split(E e);
 		BpNode* address_to_parent();
 		bool member_(const E& e);
 		size_t size_();
@@ -74,6 +74,11 @@ public:
 	virtual std::ostream& print( std::ostream& o ) const override { return root->print(o, 0); }
 };
 
+
+
+
+
+
 // BpNode implementation
 template <typename E, size_t k>
 typename BpTree<E,k>::BpNode* BpTree<E,k>::BpNode::search(const E& e) {
@@ -85,9 +90,10 @@ typename BpTree<E,k>::BpNode* BpTree<E,k>::BpNode::search(const E& e) {
 			return children[i]->search(e);
 	}
 
-	if(children[n_key+1] != nullptr)
-		return children[n_key+1]->search(e);
-	else return nullptr;
+	if(children[n_key] != nullptr)
+		return children[n_key]->search(e);
+	else 
+		return nullptr;
 }
 
 template <typename E, size_t k>
@@ -132,23 +138,43 @@ typename BpTree<E,k>::BpNode* BpTree<E,k>::BpNode::split() {
 	return new_node;
 }
 
-/*template <typename E, size_t k>
+template <typename E, size_t k>
 typename BpTree<E,k>::BpNode* BpTree<E,k>::BpNode::split(E e) {
 	size_t split_point = n_key/2;
 	bool e_is_used = false;
 	BpNode* new_node = new BpNode(parent);
 	new_node->is_leaf = this->is_leaf;
 
-	for(size_t i=order-split_point-1; i >= 0; i--) {
-		if(key[j] > e)
-			new_node->key[i] = key[j--];
-		else
-			new_node->key[i] = e;
+	if(e > key[split_point-1]) { // e > key[split_point] -> e is in new node
+		size_t j=split_point;
+		for(size_t i=split_point; i < n_key+1; i++) {
+			if(j < n_key) {
+				if(e > key[j] || e_is_used) {
+					new_node->key[new_node->n_key++] = key[j++];
+				} else {
+					new_node->key[new_node->n_key++] = e;
+					e_is_used = true;
+				}
+			} else {
+				new_node->key[new_node->n_key++] = e;
+				e_is_used = true;
+			}
+		}
+	} else if (e < key[split_point-1]) {  // another way round, e is in old node
+		for(size_t i=split_point-1; i < n_key; i++)
+			new_node->key[new_node->n_key++] = key[i];
+
+		for(size_t i=n_key-1; i > 0; i--) {
+			if(key[i-1] < e && !e_is_used) {
+				key[i] = e;
+				e_is_used = true;
+			} else {
+				key[i] = key[i-1];
+			}
+		}
 	}
 
-	if(e > key[split_point-1]) { // e > key[split_point] -> e is in new node
-		for()
-	} else if (e < key[split_point-1]) // another way round, e is in old node
+	n_key = split_point;
 
 	new_node->left = this;
 	new_node->right = this->right;
@@ -159,11 +185,12 @@ typename BpTree<E,k>::BpNode* BpTree<E,k>::BpNode::split(E e) {
 	new_node->address_to_parent();
 
 	return new_node;
-}*/
+}
 
 template <typename E, size_t k>
 typename BpTree<E,k>::BpNode* BpTree<E,k>::BpNode::address_to_parent() {
-	if(parent==nullptr) // this is the old root level, let the root handling in add() do the job
+	// this is the old root level, let the root handling in add() do the job
+	if(parent==nullptr)
 		return nullptr;
 
 	// if parent is not full, add smallest key to parent node
@@ -176,7 +203,7 @@ typename BpTree<E,k>::BpNode* BpTree<E,k>::BpNode::address_to_parent() {
 			}
 		}
 	} else
-		parent->split();
+		parent->split(key[0]);
 
 	return nullptr;
 }
@@ -233,6 +260,9 @@ std::ostream& BpTree<E,k>::BpNode::print(std::ostream& o, int depth) const {
 
 
 
+
+
+
 // BpTree implementation (override: Container)
 template <typename E, size_t k>
 void BpTree<E,k>::add(const E& e) {
@@ -241,7 +271,7 @@ void BpTree<E,k>::add(const E& e) {
 	if(node->n_key < node->order) // if node is not full, insert val
 		node->insert(e);
 	else
-		node->split();
+		node->split(e);
 	
 	// split handling: if root is split, create new root
 	if(root->right != nullptr) {
