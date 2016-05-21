@@ -116,18 +116,19 @@ typename BpTree<E,k>::BpNode* BpTree<E,k>::BpNode::split() {
 	new_node->is_leaf = this->is_leaf;
 
 	for(size_t i=split_point; i < n_key; i++)
-		new_node->key[new_node->n_key++] = key[i]
+		new_node->key[new_node->n_key++] = key[i];
 
 	new_node->left = this;
 	new_node->right = this->right;
 	this->right->left = new_node;
 	this->right = new_node;
 
-	new_node->address_to_parent()
+	new_node->address_to_parent();
 
 	return new_node;
 }
 
+template <typename E, size_t k>
 typename BpTree<E,k>::BpNode* BpTree<E,k>::BpNode::address_to_parent() {
 	if(parent==nullptr) // this is the old root level, let the root handling in add() do the job
 		return nullptr;
