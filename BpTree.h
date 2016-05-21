@@ -17,8 +17,10 @@ class BpTree : public Container<E> {
 		// instance declarations
 		static const size_t order = 2*k;
 		E key[order]; // values contained in BpNode
-		BpNode *children[order+1]; // pointers point to child nodes - in leaf, these will be nullptr
-		BpNode *parent; // show, who the parent of this BpNode is - parent = nullptr, if and only if parent is root
+		BpNode* children[order+1]; // pointers point to child nodes - in leaf, these will be nullptr
+		BpNode* parent; // show, who the parent of this BpNode is - parent = nullptr, if and only if parent is root
+		BpNode* left; // points to next node in the same depth
+		BpNode* right; // point to previous node in the same depth
 		size_t n_key; // tell how many values are contained in this bucket
 		bool is_leaf; // if the BpNode is leaf, isLeaf == 1
 
@@ -26,6 +28,8 @@ class BpTree : public Container<E> {
 		BpNode(BpNode* parent_=nullptr) : parent(parent_) {
 			is_leaf = true;
 			n_key = 0;
+			left = nullptr;
+			right = nullptr;
 		}
 		~BpNode() {
 			if(is_leaf)
@@ -38,6 +42,7 @@ class BpTree : public Container<E> {
 		BpNode* search(const E& e); // search tree for a value, e, return node that 'may' contain the value. normally call from root
 		BpNode* insert(E e); // more accurately, this is "insert to leaf", which will be manipulated by add()
 		BpNode* split();
+		BpNode* address_to_parent();
 		bool member_(const E& e);
 		size_t size_();
 		std::ostream& print(std::ostream& o, int depth) const;
@@ -106,11 +111,32 @@ typename BpTree<E,k>::BpNode* BpTree<E,k>::BpNode::insert(E e) {
 
 template <typename E, size_t k>
 typename BpTree<E,k>::BpNode* BpTree<E,k>::BpNode::split() {
+	size_t split_point = n_key/2;
 	BpNode* new_node = new BpNode(parent);
+	new_node->is_leaf = this->is_leaf;
 
-	// move values from'this' to new_node & update new n_key for both nodes
+	for(size_t i=split_point; i < n_key; i++)
+		new_node->key[new_node->n_key++] = key[i]
 
-	// re-link all pointers involved
+	new_node->left = this;
+	new_node->right = this->right;
+	this->right->left = new_node;
+	this->right = new_node;
+
+	new_node->address_to_parent()
+
+	return new_node;
+}
+
+typename BpTree<E,k>::BpNode* BpTree<E,k>::BpNode::address_to_parent() {
+	if(parent==nullptr) // this is the old root level, let the root handling in add() do the job
+		return nullptr;
+
+	// if parent is not full, add smallest key to parent node
+	if(parent->n_key < order)
+		parent->insert(key[0]);
+	else
+		parent->split();
 
 	return nullptr;
 }
@@ -174,12 +200,10 @@ void BpTree<E,k>::add(const E& e) {
 	BpNode* node = root->search(e); // perform search
 	if(node->n_key < node->order) // if node is not full, insert val
 		node->insert(e);
-	else {
-		BpNode* right_node = node->split(); // otherwise, split the bucket
-		if()
-	}
+	else
+		node->split();
 	
-	// split handling
+	// split handling: if root is split, create new root
 }
 
 template <typename E, size_t k>
