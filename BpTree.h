@@ -42,6 +42,7 @@ class BpTree : public Container<E> {
 		BpNode* search(const E& e); // search tree for a value, e, return node that 'may' contain the value. normally call from root
 		BpNode* insert(E e); // more accurately, this is "insert to leaf", which will be manipulated by add()
 		BpNode* split();
+		//BpNode* split(E e);
 		BpNode* address_to_parent();
 		bool member_(const E& e);
 		size_t size_();
@@ -100,7 +101,7 @@ typename BpTree<E,k>::BpNode* BpTree<E,k>::BpNode::insert(E e) {
 			break;
 	}
 
-	// shift old keys, then insert e ti the position i
+	// shift old keys, then insert e to the position i
 	for(size_t j=n_key; j > i; j--)
 		key[j] = key[j-1];
 	key[i] = e;
@@ -118,9 +119,12 @@ typename BpTree<E,k>::BpNode* BpTree<E,k>::BpNode::split() {
 	for(size_t i=split_point; i < n_key; i++)
 		new_node->key[new_node->n_key++] = key[i];
 
+	n_key = split_point;
+
 	new_node->left = this;
 	new_node->right = this->right;
-	this->right->left = new_node;
+	if(this->right != nullptr)
+		this->right->left = new_node;
 	this->right = new_node;
 
 	new_node->address_to_parent();
@@ -128,15 +132,50 @@ typename BpTree<E,k>::BpNode* BpTree<E,k>::BpNode::split() {
 	return new_node;
 }
 
+/*template <typename E, size_t k>
+typename BpTree<E,k>::BpNode* BpTree<E,k>::BpNode::split(E e) {
+	size_t split_point = n_key/2;
+	bool e_is_used = false;
+	BpNode* new_node = new BpNode(parent);
+	new_node->is_leaf = this->is_leaf;
+
+	for(size_t i=order-split_point-1; i >= 0; i--) {
+		if(key[j] > e)
+			new_node->key[i] = key[j--];
+		else
+			new_node->key[i] = e;
+	}
+
+	if(e > key[split_point-1]) { // e > key[split_point] -> e is in new node
+		for()
+	} else if (e < key[split_point-1]) // another way round, e is in old node
+
+	new_node->left = this;
+	new_node->right = this->right;
+	if(this->right != nullptr)
+		this->right->left = new_node;
+	this->right = new_node;
+
+	new_node->address_to_parent();
+
+	return new_node;
+}*/
+
 template <typename E, size_t k>
 typename BpTree<E,k>::BpNode* BpTree<E,k>::BpNode::address_to_parent() {
 	if(parent==nullptr) // this is the old root level, let the root handling in add() do the job
 		return nullptr;
 
 	// if parent is not full, add smallest key to parent node
-	if(parent->n_key < order)
+	if(parent->n_key < order) {
 		parent->insert(key[0]);
-	else
+		for(size_t i=0; i < parent->n_key; i++) {
+			if(key[0] == parent->key[i]) {
+				parent->children[i+1] = this;
+				break;
+			}
+		}
+	} else
 		parent->split();
 
 	return nullptr;
@@ -205,6 +244,19 @@ void BpTree<E,k>::add(const E& e) {
 		node->split();
 	
 	// split handling: if root is split, create new root
+	if(root->right != nullptr) {
+		BpNode* left_subroot = root;
+		BpNode* right_subroot = left_subroot->right;
+
+		root = new BpNode(nullptr);
+		root->is_leaf = false;
+		root->n_key = 1;
+		root->key[0] = right_subroot->key[0];
+		root->children[0] = left_subroot;
+		root->children[1] = right_subroot;
+		left_subroot->parent = root;
+		right_subroot->parent = root;
+	}
 }
 
 template <typename E, size_t k>
